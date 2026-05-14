@@ -64,7 +64,7 @@ jobs:
           set -euxo pipefail
           cd "$KERNEL_SRC"
           cp out/dreamlte-dream2lte/arch/arm64/boot/Image.gz RAD/AIK-G950/split_img/boot.img-zImage
-          cp out/dreamlte-dream2lte/arch/arm64/boot/dts/exynos/dtb_dreamlte.img RAD/AIK-G950/split_img/boot.img-dt
+          cp out/dreamlte-dream2lte/arch/arm64/boot/dtb_dreamlte.img RAD/AIK-G950/split_img/boot.img-dt
           (
             cd RAD/AIK-G950
             ./repackimg.sh --local
@@ -72,7 +72,7 @@ jobs:
           )
 
           cp out/dreamlte-dream2lte/arch/arm64/boot/Image.gz RAD/AIK-G955/split_img/boot.img-zImage
-          cp out/dreamlte-dream2lte/arch/arm64/boot/dts/exynos/dtb_dream2lte.img RAD/AIK-G955/split_img/boot.img-dt
+          cp out/dreamlte-dream2lte/arch/arm64/boot/dtb_dream2lte.img RAD/AIK-G955/split_img/boot.img-dt
           (
             cd RAD/AIK-G955
             ./repackimg.sh --local
@@ -94,7 +94,7 @@ jobs:
           set -euxo pipefail
           cd "$KERNEL_SRC"
           cp out/greatlte/arch/arm64/boot/Image.gz RAD/AIK-N950/split_img/boot.img-zImage
-          cp out/greatlte/arch/arm64/boot/dts/exynos/dtb_greatlte.img RAD/AIK-N950/split_img/boot.img-dt
+          cp out/greatlte/arch/arm64/boot/dtb_greatlte.img RAD/AIK-N950/split_img/boot.img-dt
           (
             cd RAD/AIK-N950
             ./repackimg.sh --local
