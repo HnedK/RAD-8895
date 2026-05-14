@@ -57,7 +57,7 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export LOCALVERSION=-RAD
           make O=out/dreamlte-dream2lte exynos8895-dreamlte-dream2lte_defconfig
-          make -j"$(nproc)" O=out/dreamlte-dream2lte KCFLAGS="-Wno-error=attribute-alias -Wno-error=stringop-overflow" Image.gz dtb_dreamlte.img dtb_dream2lte.img
+          make -j"$(nproc)" O=out/dreamlte-dream2lte KCFLAGS="-Wno-error=attribute-alias -Wno-error=stringop-overflow -Wno-error=sizeof-pointer-memaccess" Image.gz dtb_dreamlte.img dtb_dream2lte.img
 
       - name: Repack S8 boot images
         run: |
@@ -87,7 +87,7 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export LOCALVERSION=-RAD
           make O=out/greatlte exynos8895-greatlte_defconfig
-          make -j"$(nproc)" O=out/greatlte KCFLAGS="-Wno-error=attribute-alias -Wno-error=stringop-overflow" Image.gz dtb_greatlte.img
+          make -j"$(nproc)" O=out/greatlte KCFLAGS="-Wno-error=attribute-alias -Wno-error=stringop-overflow -Wno-error=sizeof-pointer-memaccess" Image.gz dtb_greatlte.img
 
       - name: Repack Note8 boot image
         run: |
