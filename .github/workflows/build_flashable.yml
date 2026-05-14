@@ -1,0 +1,121 @@
+name: build-flashable
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - OneUI-Q
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc \
+            bison \
+            cpio \
+            flex \
+            g++ \
+            gcc-aarch64-linux-gnu \
+            git \
+            libelf-dev \
+            libssl-dev \
+            make \
+            rsync \
+            python3 \
+            unzip \
+            wget \
+            xz-utils \
+            zip
+
+      - name: Prepare kernel source
+        run: |
+          set -euxo pipefail
+          kernel_base="$RUNNER_TEMP/linux-4.4.127"
+          tarball="$RUNNER_TEMP/linux-4.4.127.tar.xz"
+          wget -O "$tarball" https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.4.127.tar.xz
+          mkdir -p "$RUNNER_TEMP"
+          tar -xJf "$tarball" -C "$RUNNER_TEMP"
+          rsync -a --exclude='.git/' --exclude='out/' ./ "$kernel_base"/
+          echo "KERNEL_SRC=$kernel_base" >> "$GITHUB_ENV"
+
+      - name: Build S8 kernel
+        run: |
+          set -euxo pipefail
+          cd "$KERNEL_SRC"
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export LOCALVERSION=-RAD
+          make O=out/dreamlte-dream2lte exynos8895-dreamlte-dream2lte_defconfig
+          make -j"$(nproc)" O=out/dreamlte-dream2lte Image.gz dtb_dreamlte.img dtb_dream2lte.img
+
+      - name: Repack S8 boot images
+        run: |
+          set -euxo pipefail
+          cd "$KERNEL_SRC"
+          cp out/dreamlte-dream2lte/arch/arm64/boot/Image.gz RAD/AIK-G950/split_img/boot.img-zImage
+          cp out/dreamlte-dream2lte/arch/arm64/boot/dts/exynos/dtb_dreamlte.img RAD/AIK-G950/split_img/boot.img-dt
+          (
+            cd RAD/AIK-G950
+            ./repackimg.sh --local
+            mv -f image-new.img "$GITHUB_WORKSPACE"/boot_G950.img
+          )
+
+          cp out/dreamlte-dream2lte/arch/arm64/boot/Image.gz RAD/AIK-G955/split_img/boot.img-zImage
+          cp out/dreamlte-dream2lte/arch/arm64/boot/dts/exynos/dtb_dream2lte.img RAD/AIK-G955/split_img/boot.img-dt
+          (
+            cd RAD/AIK-G955
+            ./repackimg.sh --local
+            mv -f image-new.img "$GITHUB_WORKSPACE"/boot_G955.img
+          )
+
+      - name: Build Note8 kernel
+        run: |
+          set -euxo pipefail
+          cd "$KERNEL_SRC"
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export LOCALVERSION=-RAD
+          make O=out/greatlte exynos8895-greatlte_defconfig
+          make -j"$(nproc)" O=out/greatlte Image.gz dtb_greatlte.img
+
+      - name: Repack Note8 boot image
+        run: |
+          set -euxo pipefail
+          cd "$KERNEL_SRC"
+          cp out/greatlte/arch/arm64/boot/Image.gz RAD/AIK-N950/split_img/boot.img-zImage
+          cp out/greatlte/arch/arm64/boot/dts/exynos/dtb_greatlte.img RAD/AIK-N950/split_img/boot.img-dt
+          (
+            cd RAD/AIK-N950
+            ./repackimg.sh --local
+            mv -f image-new.img "$GITHUB_WORKSPACE"/boot_N950.img
+          )
+
+      - name: Assemble flashable zip
+        run: |
+          set -euxo pipefail
+          cd "$GITHUB_WORKSPACE"
+          rm -rf flashable
+          mkdir -p flashable/META-INF/com/google/android
+          cp "$KERNEL_SRC"/RAD/Flashable/META-INF/com/google/android/update-binary flashable/META-INF/com/google/android/
+          cp "$KERNEL_SRC"/RAD/Flashable/META-INF/com/google/android/updater-script flashable/META-INF/com/google/android/
+          cp boot_G950.img flashable/
+          cp boot_G955.img flashable/
+          cp boot_N950.img flashable/
+          (cd flashable && zip -r ../RAD-8895-OneUI-Q-flashable.zip .)
+
+      - name: Upload flashable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: RAD-8895-OneUI-Q-flashable
+          path: RAD-8895-OneUI-Q-flashable.zip
